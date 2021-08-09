@@ -46,16 +46,18 @@ if option == 'ARK':
     ownership = requests.get(f'https://arkfunds.io/api/v1/stock/fund-ownership?symbol={symbol}').json()
     #Get buys/sells for the ticker
     trades= requests.get(f'https://arkfunds.io/api/v1/stock/trades?symbol={symbol}&date_from=2021-01-01&date_to={date}').json()
-    #stock profile
     profile=requests.get(f'https://arkfunds.io/api/v1/stock/profile?symbol={symbol}').json()
-    
-    #prepare trades dataframe
-    trades=pd.DataFrame(trades['trades'])
-    trades=trades[['date', 'fund', 'direction', 'shares',
-       'etf_percent']].sort_index()
-    
     owned_shares=ownership['totals']['shares']
     st.write(f'ARK currently owns {owned_shares} shares.\n')
+    if 'detail' in trades:
+        st.write(f'There are no ARK trades for {symbol}')
+    else:
+        trades=pd.DataFrame(trades['trades'])
+        trades=trades[['date', 'fund', 'direction', 'shares',
+       'etf_percent']].sort_index()
+        st.write(f'Last ARK trades for {symbol}')
+        st.dataframe(trades)
     
-    st.write(f'Last ARK trades for {symbol}')
-    st.dataframe(trades)
+    
+    
+    
