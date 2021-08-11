@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import requests as requests
+import matplotlib.pyplot as plt
 #import tweepy
 
 from alphavantage import *
@@ -25,28 +26,41 @@ if option == 'Overview':
     st.image(f'https://finviz.com/chart.ashx?t={symbol}')
     
     st.subheader('Stock Ownership and changes in ARK')
-   #Get ownership
+    #Get ownership
     ownership = requests.get(f'https://arkfunds.io/api/v1/stock/fund-ownership?symbol={symbol}').json()
     #Get buys/sells for the ticker
     trades= requests.get(f'https://arkfunds.io/api/v1/stock/trades?symbol={symbol}&date_from=2021-01-01&date_to={date}').json()
     profile=requests.get(f'https://arkfunds.io/api/v1/stock/profile?symbol={symbol}').json()
+    #Define total owner shares by ARK
     owned_shares=ownership['totals']['shares']
     st.write(f'ARK currently owns {owned_shares} shares.\n')
+    #If there is no ownership found, "detail" is used as key in the dictionary - don't want to show that
     if 'detail' in trades:
         st.write(f'There are no ARK trades for {symbol}')
     else:
         trades=pd.DataFrame(trades['trades'])
+        #change order of columns
         trades=trades[['date', 'fund', 'direction', 'shares',
        'etf_percent']].sort_index()
         st.write(f'Last ARK trades for {symbol}')
         st.dataframe(trades)
+        #st.dataframe(trades.style())
         
     st.subheader('Analyst recommendations')
+    #download analyst recommendation history
     url= base_url = f"https://finnhub.io/api/v1/stock/recommendation?symbol={symbol}&token=bv94chf48v6p9584nq2g"
     s = requests.get(url)
+    #if no recommendations are assigned, empty dictionary is returned
     if len(s.json()) > 0 :
         analyst=pd.DataFrame(s.json())
-        st.dataframe(analyst[['period','strongBuy','buy', 'hold',  'sell',  'strongSell']])
+        #reorder
+        analyst = analyst[['period','strongBuy','buy', 'hold',  'sell',  'strongSell']]
+        #sort by period
+        analyst=analyst.sort_values(by='period',ascending=False)
+        #remove index
+        analyst=analyst.set_index('period')
+        #put into chart
+        st.bar_chart(analyst)
     else:
         st.write(f'{symbol} is not covered by any analyst.')
         
@@ -55,7 +69,8 @@ if option == 'Overview':
     s = requests.get(url)
     if len(s.json()['data']) > 0:
         insiders=pd.DataFrame(s.json()['data'])
-        st.dataframe(insiders[['name', 'share', 'change', 'transactionDate','transactionPrice']])
+        insiders=insiders[['name', 'share', 'change', 'transactionDate','transactionPrice']].set_index('transactionDate')
+        st.dataframe(insiders)
     else:
         st.write(f'{symbol} does not have any insider activity.')
         
