@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import requests as requests
-import tweepy
+#import tweepy
 
 from alphavantage import *
 
@@ -97,11 +97,4 @@ if option == 'ARK':
     profile=requests.get(f'https://arkfunds.io/api/v1/stock/profile?symbol={symbol}').json()
     owned_shares=ownership['totals']['shares']
     st.write(f'ARK currently owns {owned_shares} shares.\n')
-    if 'detail' in trades:
-        st.write(f'There are no ARK trades for {symbol}')
-    else:
-        trades=pd.DataFrame(trades['trades'])
-        trades=trades[['date', 'fund', 'direction', 'shares',
-       'etf_percent']].sort_index()
-        st.write(f'Last ARK trades for {symbol}')
-        st.dataframe(trades)
+
